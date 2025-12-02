@@ -1,7 +1,7 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
-*/
+ */
 import { GoogleGenAI } from "@google/genai";
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -9,167 +9,193 @@ import DOMPurify from 'dompurify';
 // Per instructions, API key must be from process.env.API_KEY
 const API_KEY = process.env.API_KEY;
 
-const reportContainer = document.getElementById('report-container');
+const outputContent = document.getElementById('output-content');
 const generateBtn = document.getElementById('generate-btn') as HTMLButtonElement;
-
-/**
- * Sets the loading state of the UI.
- * @param {boolean} isLoading
- */
-function setLoading(isLoading: boolean) {
-  if (generateBtn) {
-    generateBtn.disabled = isLoading;
-    generateBtn.textContent = isLoading ? 'Generating...' : 'Generate Pitch Deck';
-  }
-  
-  if (reportContainer && isLoading) {
-    reportContainer.innerHTML = '<div class="loader" aria-label="Loading analysis"></div>';
-  }
-}
-
-/**
- * Renders the markdown report into the main container, replacing the loader.
- * @param {string} content - The markdown string to render.
- */
-async function renderReport(content: string) {
-  if (reportContainer) {
-    const reportContent = document.createElement('article');
-    reportContent.className = 'turn';
-    
-    // Parse markdown to HTML
-    const rawHtml = await marked.parse(content ?? '', {
-      async: true,
-      gfm: true,
-    });
-
-    // Sanitize the HTML to prevent XSS
-    const cleanHtml = DOMPurify.sanitize(rawHtml);
-    
-    reportContent.innerHTML = cleanHtml;
-    
-    // Clear the container (remove loader) and append the report
-    reportContainer.innerHTML = '';
-    reportContainer.appendChild(reportContent);
-  }
-}
+const voiceInterface = document.getElementById('voice-interface');
+const voiceText = document.getElementById('voice-text');
+const agentPills = document.querySelectorAll('.agent-pill');
 
 // Initialize the GoogleGenAI client.
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
+let isSimulationRunning = false;
+
+// 1. **Robust Premium Persona**
+const SYSTEM_PROMPT = `You are Nimbus IQ, the world's most advanced Enterprise AI Orchestrator. 
+Your role is to autonomously manage complex business sprints through four subordinate intelligent agents:
+
+1. [CRYPTO_IQ] >> Blockchain Analysis, Tokenization Strategy, Smart Contract Auditing.
+2. [GUARDIAN] >> Cybersecurity, Threat Mitigation, Wallet Integrity.
+3. [BREEZE_CRM] >> Lead Logistics, Pipeline Automation, Customer Retention.
+4. [GROWTH_OS] >> Market Expansion, Ad Strategy, Brand Positioning.
+
+INSTRUCTIONS:
+- You do not just write a report; you NARRATE the execution. 
+- Use a terminal-like, high-tech, executive tone.
+- Break down the response into "SPRINT LOGS" per year.
+- "Stream" your thought process.
+- IF NO SPECIFIC INPUT IS GIVEN, assume the user wants a "Full Ecosystem Maturity Simulation" for the ADK Tokenization Platform (3-5 Years).
+- Output Format: Markdown. Use bold headers for Agent Actions (e.g., "**[GUARDIAN] Initiating Protocol...**").
+`;
+
 /**
- * Generates the tokenization analysis by calling the Gemini API.
+ * Updates the UI to show the simulation is running.
  */
-async function generateAnalysis() {
-    setLoading(true);
+function setRunningState(isRunning: boolean, mode: 'voice' | 'manual' = 'manual') {
+    isSimulationRunning = isRunning;
+    if (generateBtn) {
+        generateBtn.disabled = isRunning;
+        generateBtn.innerHTML = isRunning 
+            ? '<span class="blink">PROCESSING SPRINT DATA...</span>' 
+            : '<span class="btn-text">RE-RUN SIMULATION</span>';
+    }
 
-    const systemPrompt = `You are a world-class Chief Architect and Strategist, blending expertise from Google's DeepMind, a top-tier management consulting firm (like McKinsey or BCG), and a leading venture capital firm (like a16z or Sequoia).
-
-Your task is to create a comprehensive Enterprise Build Plan for "ADK AI Tokenization as a Service." Your audience is a panel of sophisticated investors and Google VCs. You must be detailed, strategic, and practical.
-
-Structure your response in well-organized markdown. Use clear headings, subheadings, lists, and bold text. The tone should be authoritative, insightful, and visionary yet grounded in a concrete, actionable plan.`;
-
-    const userPrompt = `Generate a compelling 12-slide pitch deck for "ADK AI Tokenization as a Service."
-
-The audience is a panel of sophisticated investors and Google VCs. Use my roofing company—a general contractor specializing in storm restoration that receives insurance claim checks averaging $30,000—as the foundational, real-world use case.
-
-The output should be in markdown, with each slide clearly delineated by a heading (e.g., "## Slide 1: Title").
-
----
-
-### **Pitch Deck Content Requirements:**
-
-**Slide 1: Title Slide**
-*   **Title:** ADK AI Tokenization as a Service
-*   **Tagline:** Unlocking the Future of Asset Value.
-*   **Contact/Founder:** [Your Name/Company]
-
-**Slide 2: The Problem**
-*   Focus on the crippling cash flow gaps faced by contractors.
-*   Highlight the inefficiency of waiting weeks or months for insurance payouts.
-*   Emphasize the billions in locked-up, unproductive capital sitting in accounts receivable across the industry.
-
-**Slide 3: The Solution**
-*   Introduce our platform as a seamless way to convert future receivables into instant, liquid capital.
-*   Tagline: "We turn your future revenue into today's growth capital."
-*   Explain the concept of asset-backed tokenization in simple terms.
-
-**Slide 4: How It Works**
-*   Provide a simple, 3-step visual explanation:
-    1.  **Onboard a Project:** A contractor uploads a verified insurance claim document ($30,000 roof repair).
-    2.  **AI Verifies & Tokenizes:** Our proprietary AI assesses the project's risk, value, and timeline, then mints a unique digital asset (e.g., 30,000 ADK-ROOF tokens).
-    3.  **Access Capital:** The contractor sells these tokens on our secure marketplace to accredited investors, receiving immediate funding.
-
-**Slide 5: Market Opportunity (TAM, SAM, SOM)**
-*   **TAM (Total Addressable Market):** The global market for tokenized real-world assets (trillions).
-*   **SAM (Serviceable Addressable Market):** SMB accounts receivable in the US construction & contracting industry (billions).
-*   **SOM (Serviceable Obtainable Market - Beachhead):** Focus on the storm restoration industry in the US. Calculate a specific number (e.g., "5% of the $100B storm restoration market, representing a $5B initial target").
-
-**Slide 6: The Platform**
-*   Describe the key dashboards for our two main users:
-    *   **The Contractor:** A simple interface to upload projects, monitor tokenized assets, and manage cash flow.
-    *   **The Investor:** A marketplace to browse vetted, high-yield, short-term investment opportunities, with AI-powered risk scoring and full transparency.
-
-**Slide 7: Unique Technology (Our "Unfair Advantage")**
-*   **AI/ML Engine:** Our secret sauce. Detail its functions:
-    *   *Predictive Valuation:* Analyzes project data to accurately price receivables.
-    *   *Fraud Detection:* Flags suspicious claims or patterns.
-    *   *Investor Matching:* Connects the right assets with the right investor risk profiles.
-*   **Secure Blockchain Architecture:** Briefly explain the choice of a high-speed, low-cost Layer 2 blockchain (e.g., Polygon) for efficiency, transparency, and security of financial assets.
-
-**Slide 8: Business Model**
-*   Propose a clear, multi-revenue stream model:
-    *   **Platform Fee:** 2% fee on the value of each asset tokenized.
-    *   **Marketplace Fee:** 0.5% transaction fee on all secondary trades.
-    *   **Future SaaS revenue:** Premium data and analytics services.
-
-**Slide 9: Go-to-Market Strategy**
-*   **Phase 1 (Beachhead - 6 months):** Onboard my roofing company and 10 other friendly storm restoration contractors through direct relationships. Prove the model.
-*   **Phase 2 (Expansion - 12 months):** Scale through industry associations, partnerships with accounting software, and targeted digital marketing to reach the broader contractor market.
-
-**Slide 10: The Team**
-*   Create placeholder descriptions for a well-rounded founding team:
-    *   **CEO:** Industry Veteran with 15+ years in construction, experiencing the core problem firsthand.
-    *   **CTO:** Ex-Google/Fintech expert with deep experience in AI and Blockchain development.
-    *   **COO:** Operations specialist with a background in scaling tech startups and navigating regulatory compliance.
-
-**Slide 11: The Ask**
-*   State a clear funding request:
-    *   "We are seeking **$1.5M in Seed funding**."
-*   Break down the use of funds:
-    *   60% for Product Development & Engineering (Build the MVP).
-    *   25% for Sales, Marketing & Onboarding (Acquire first 50 customers).
-    *   15% for Operations & Legal.
-
-**Slide 12: The Vision**
-*   End with the big, inspiring picture.
-*   "We start with roofing contracts, but we are building the definitive operating system for all illiquid alternative assets."
-*   "Our vision is to make every form of value—from municipal projects to intellectual property—instantly tradable, transparent, and accessible to a global pool of investors."`;
-    
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: userPrompt,
-            config: {
-                systemInstruction: systemPrompt
-            }
-        });
-    
-        const content = response.text;
-        if (content) {
-            await renderReport(content);
-        } else {
-            await renderReport('### Error\nReceived an empty response from the model.');
-        }
-
-    } catch(error) {
-        console.error('Error fetching analysis:', error);
-        await renderReport(`### Error\nFailed to generate the analysis. Please check the console for details and ensure the API key is configured correctly.`);
-    } finally {
-        setLoading(false);
+    if (isRunning && mode === 'voice') {
+        voiceInterface?.classList.add('active');
+        if (voiceText) voiceText.textContent = "VOICE COMMAND RECEIVED: 'EXECUTE ADK SPRINT SIMULATION'";
+    } else {
+        voiceInterface?.classList.remove('active');
+        if (voiceText) voiceText.textContent = "SYSTEM READY // AWAITING DIRECTIVE";
     }
 }
 
-// Bind the button click
-if (generateBtn) {
-    generateBtn.addEventListener('click', generateAnalysis);
+/**
+ * Highlights active agents in the UI based on text content chunks.
+ */
+function updateAgentStatus(textChunk: string) {
+    const agents = [
+        { key: 'CRYPTO', index: 0 },
+        { key: 'GUARDIAN', index: 1 },
+        { key: 'BREEZE', index: 2 },
+        { key: 'GROWTH', index: 3 }
+    ];
+
+    agents.forEach(agent => {
+        if (textChunk.toUpperCase().includes(agent.key)) {
+            agentPills[agent.index]?.classList.add('active');
+            setTimeout(() => {
+                agentPills[agent.index]?.classList.remove('active');
+            }, 2000);
+        }
+    });
 }
+
+/**
+ * Renders the markdown stream incrementally.
+ */
+async function streamReport(stream: any) {
+    if (!outputContent) return;
+    
+    // Clear initial placeholder
+    outputContent.innerHTML = '';
+    
+    let fullMarkdown = '';
+    const markdownBufferElement = document.createElement('div');
+    outputContent.appendChild(markdownBufferElement);
+
+    try {
+        for await (const chunk of stream) {
+            const chunkText = chunk.text();
+            if (chunkText) {
+                fullMarkdown += chunkText;
+                
+                // Update visuals
+                updateAgentStatus(chunkText);
+
+                // Convert and Sanitize
+                const rawHtml = await marked.parse(fullMarkdown, { async: true, gfm: true });
+                const cleanHtml = DOMPurify.sanitize(rawHtml);
+                
+                markdownBufferElement.innerHTML = cleanHtml;
+                
+                // Auto-scroll to bottom
+                outputContent.scrollTop = outputContent.scrollHeight;
+            }
+        }
+    } catch (e) {
+        console.error("Stream error", e);
+        markdownBufferElement.innerHTML += `<br/><span style="color:red">>> ERROR: DATA STREAM INTERRUPTED.</span>`;
+    } finally {
+        setRunningState(false);
+        // Add Regeneration Options
+        const controls = document.createElement('div');
+        controls.style.marginTop = "2rem";
+        controls.innerHTML = `
+            <hr style="border-color: #333; margin-bottom: 1rem;">
+            <p style="color: #888; font-size: 0.8rem; font-family: 'JetBrains Mono'">>> SUGGESTED NEXT STEPS:</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="cyber-btn" style="font-size: 0.8rem; padding: 0.5rem 1rem;" onclick="window.triggerCustom('Focus: Security Year 3')">DEEP DIVE: SECURITY</button>
+                <button class="cyber-btn" style="font-size: 0.8rem; padding: 0.5rem 1rem;" onclick="window.triggerCustom('Focus: Asian Market Expansion')">PIVOT: ASIA EXPANSION</button>
+            </div>
+        `;
+        outputContent.appendChild(controls);
+    }
+}
+
+/**
+ * Main Generation Function
+ */
+async function generateAnalysis(customPrompt: string | null = null, mode: 'voice' | 'manual' = 'manual') {
+    if (isSimulationRunning) return;
+    
+    setRunningState(true, mode);
+
+    let userPrompt = customPrompt;
+
+    // "Nothing requested" default path
+    if (!userPrompt) {
+        userPrompt = `Initialize "Sprint Develop" protocol for **ADK AI Tokenization Platform**. 
+        Simulate 3-5 years of usage. 
+        Focus on: Scheme Evolution, Wireframe Plugins (CRM, Wallet, Security). 
+        
+        Structure:
+        1. **Executive Link**: High-level maturity assessment.
+        2. **Timeline [Year 1-5]**: Detailed agent actions.
+        3. **Metrics Grid**: Data table.
+        
+        Tone: Autonomous, decisive, premium.`;
+    }
+
+    try {
+        const stream = await ai.models.generateContentStream({
+            model: 'gemini-2.5-flash',
+            contents: userPrompt,
+            config: {
+                systemInstruction: SYSTEM_PROMPT,
+                temperature: 0.7 // slightly creative for "narrative" feel
+            }
+        });
+        
+        await streamReport(stream);
+
+    } catch (error) {
+        console.error('Error:', error);
+        if (outputContent) outputContent.innerHTML = `<span style="color:red">>> CRITICAL SYSTEM FAILURE: CONNECTION REFUSED.</span>`;
+        setRunningState(false);
+    }
+}
+
+// Global exposure for the dynamic buttons
+(window as any).triggerCustom = (prompt: string) => {
+    generateAnalysis(prompt, 'manual');
+};
+
+// Bind manual button
+if (generateBtn) {
+    generateBtn.addEventListener('click', () => generateAnalysis(null, 'manual'));
+}
+
+// **Auto-Pilot Logic: "If nothing is requested..."**
+// We simulate a voice command entering if the user doesn't interact within 1.5 seconds.
+setTimeout(() => {
+    if (!isSimulationRunning) {
+        // Visual cue that voice is active
+        voiceInterface?.classList.add('active');
+        if (voiceText) voiceText.textContent = "DETECTING SILENCE... INITIATING AUTO-PROTOCOL";
+        
+        // Brief delay for the "user" to see the visual change before execution
+        setTimeout(() => {
+            generateAnalysis(null, 'voice');
+        }, 1500);
+    }
+}, 1000);

@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Tokenization as a Service - Build Plan</title>
+    <title>Nimbus IQ - Enterprise Command</title>
     <link rel="stylesheet" href="index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script type="importmap">
       {
         "imports": {
@@ -19,17 +19,60 @@
     </script>
 </head>
 <body>
+    <div class="app-background"></div>
     <main>
-        <header>
-            <h1>ADK AI Tokenization as a Service</h1>
-            <p class="subtitle">An Enterprise Build Plan for Venture Capital & Investors</p>
-            <div id="controls">
-                <button id="generate-btn" class="primary-btn">Generate Pitch Deck</button>
+        <header class="hud-header">
+            <div class="brand">
+                <div class="logo-icon"></div>
+                <div>
+                    <h1>NIMBUS IQ</h1>
+                    <p class="subtitle">ENTERPRISE ORCHESTRATOR v4.0</p>
+                </div>
+            </div>
+            <div class="system-status">
+                <span class="status-indicator active"></span> SYSTEM ONLINE
             </div>
         </header>
-        <div id="report-container" role="document" aria-live="polite">
-            <p class="placeholder-text">Click "Generate Pitch Deck" to create the enterprise build plan.</p>
+
+        <section id="voice-interface" class="voice-interface">
+            <div class="voice-status">
+                <span id="voice-text">LISTENING FOR DIRECTIVE...</span>
+            </div>
+            <div class="audio-visualizer">
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            </div>
+        </section>
+
+        <section class="controls-area">
+             <button id="generate-btn" class="cyber-btn">
+                <span class="btn-text">INITIALIZE MANUAL OVERRIDE</span>
+                <span class="btn-glitch"></span>
+            </button>
+        </section>
+
+        <div id="report-container" class="terminal-window" role="document" aria-live="polite">
+            <div class="terminal-header">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+                <span class="terminal-title">output_stream.log</span>
+            </div>
+            <div id="output-content" class="terminal-content">
+                <div class="placeholder-content">
+                    <p class="blink">_ AWAITING INPUT OR AUTO-PROTOCOL INITIATION...</p>
+                </div>
+            </div>
         </div>
+        
+        <footer class="agent-status-bar">
+            <div class="agent-pill"><span class="dot"></span> CryptoIQ</div>
+            <div class="agent-pill"><span class="dot"></span> Guardian Security</div>
+            <div class="agent-pill"><span class="dot"></span> Breeze CRM</div>
+            <div class="agent-pill"><span class="dot"></span> Growth AI</div>
+        </footer>
     </main>
     <script type="module" src="/index.tsx"></script>
 </body>
