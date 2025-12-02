@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tokenization as a Service - Build Plan</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "marked": "https://esm.sh/marked@^15.0.8",
+          "dompurify": "https://esm.sh/dompurify@3.0.8",
+          "@google/genai": "https://esm.sh/@google/genai"
+        }
+      }
+    </script>
+</head>
+<body>
+    <main>
+        <header>
+            <h1>ADK AI Tokenization as a Service</h1>
+            <p class="subtitle">An Enterprise Build Plan for Venture Capital & Investors</p>
+            <div id="controls">
+                <button id="generate-btn" class="primary-btn">Generate Pitch Deck</button>
+            </div>
+        </header>
+        <div id="report-container" role="document" aria-live="polite">
+            <p class="placeholder-text">Click "Generate Pitch Deck" to create the enterprise build plan.</p>
+        </div>
+    </main>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
