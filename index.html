@@ -3,77 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nimbus IQ - Enterprise Command</title>
+    <title>Nimbus IQ - ADK Workbench IDE</title>
     <link rel="stylesheet" href="index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Highlight.js for code syntax -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script type="importmap">
       {
         "imports": {
           "marked": "https://esm.sh/marked@^15.0.8",
           "dompurify": "https://esm.sh/dompurify@3.0.8",
-          "@google/genai": "https://esm.sh/@google/genai"
+          "@google/genai": "https://esm.sh/@google/genai",
+          "highlight.js": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/es/highlight.min.js"
         }
       }
     </script>
 </head>
 <body>
     <div class="app-background"></div>
-    <main>
-        <header class="hud-header">
+    
+    <div class="workbench-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
             <div class="brand">
                 <div class="logo-icon"></div>
-                <div>
-                    <h1>NIMBUS IQ</h1>
-                    <p class="subtitle">ENTERPRISE ORCHESTRATOR v4.0</p>
+                <div class="brand-text">
+                    <h1>ADK</h1>
+                    <span class="version">WORKBENCH v5.0</span>
                 </div>
             </div>
-            <div class="system-status">
-                <span class="status-indicator active"></span> SYSTEM ONLINE
+            
+            <div class="nav-items">
+                <button class="nav-btn active" data-view="terminal">
+                    <span class="icon">_</span> TERMINAL
+                </button>
+                <button class="nav-btn" data-view="crm">
+                    <span class="icon">|||</span> BREEZE CRM
+                </button>
+                <button class="nav-btn" data-view="ide">
+                    <span class="icon">{}</span> ADK STUDIO
+                </button>
+                <button class="nav-btn" data-view="deploy">
+                    <span class="icon">☁</span> CLOUD DEPLOY
+                </button>
+                <button class="nav-btn" data-view="marketing">
+                    <span class="icon">⚡</span> MARKETING HQ
+                </button>
             </div>
-        </header>
 
-        <section id="voice-interface" class="voice-interface">
-            <div class="voice-status">
-                <span id="voice-text">LISTENING FOR DIRECTIVE...</span>
+            <!-- Market Watch Widget -->
+            <div class="market-watch">
+                <div class="market-header">CRYPTO IQ WATCH</div>
+                <div class="ticker-wrap">
+                    <div class="ticker" id="market-ticker">
+                        <div class="ticker-item">BTC <span class="up">▲ 0.5%</span></div>
+                        <div class="ticker-item">ETH <span class="down">▼ 1.2%</span></div>
+                        <div class="ticker-item">SOL <span class="up">▲ 3.4%</span></div>
+                    </div>
+                </div>
             </div>
-            <div class="audio-visualizer">
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-            </div>
-        </section>
 
-        <section class="controls-area">
-             <button id="generate-btn" class="cyber-btn">
-                <span class="btn-text">INITIALIZE MANUAL OVERRIDE</span>
-                <span class="btn-glitch"></span>
-            </button>
-        </section>
-
-        <div id="report-container" class="terminal-window" role="document" aria-live="polite">
-            <div class="terminal-header">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-                <span class="terminal-title">output_stream.log</span>
+            <div class="voice-status-mini">
+                <div class="status-dot active"></div> LISTENING
             </div>
-            <div id="output-content" class="terminal-content">
-                <div class="placeholder-content">
-                    <p class="blink">_ AWAITING INPUT OR AUTO-PROTOCOL INITIATION...</p>
+        </nav>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            
+            <!-- Header / Status Bar -->
+            <header class="workspace-header">
+                <div class="current-task" id="header-status">SYSTEM IDLE // AWAITING INPUT</div>
+                <div class="loop-control">
+                    <span>INFINITE LOOP AI:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="infinite-loop-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <button id="generate-btn" class="cyber-btn-small">INITIATE SEQUENCE</button>
+            </header>
+
+            <!-- VIEW: Terminal (Original Report) -->
+            <section id="view-terminal" class="panel active">
+                <div class="terminal-window full-height">
+                    <div class="terminal-header">
+                        <span class="terminal-title">>> nimbus_orchestrator.log</span>
+                    </div>
+                    <div id="output-content" class="terminal-content">
+                        <div class="placeholder-content">
+                            <p class="blink">_ INITIALIZE SPRINT TO BEGIN GENERATION...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: Breeze CRM Pipeline -->
+            <section id="view-crm" class="panel">
+                <div class="crm-header-controls">
+                    <div class="agent-status">
+                        <span class="status-dot active"></span> 
+                        <span>SALES AGENT: <strong>ACTIVE</strong> (Auto-Negotiating via Email)</span>
+                    </div>
+                </div>
+                <div class="kanban-board">
+                    <div class="kanban-column" id="col-leads">
+                        <h3>INCOMING LEADS <span class="count">0</span></h3>
+                        <div class="card-list" id="list-leads"></div>
+                    </div>
+                    <div class="kanban-column" id="col-active">
+                        <h3>ACTIVE NEGOTIATION <span class="count">0</span></h3>
+                        <div class="card-list" id="list-active"></div>
+                    </div>
+                    <div class="kanban-column" id="col-closed">
+                        <h3>TOKENIZED / WON <span class="count">0</span></h3>
+                        <div class="card-list" id="list-closed"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: ADK Studio (IDE) -->
+            <section id="view-ide" class="panel">
+                <div class="ide-layout">
+                    <div class="file-explorer">
+                        <div class="explorer-title">ADK PROJECT</div>
+                        <div class="file-item active" id="file-sol"><span class="icon">Ξ</span> AssetToken.sol</div>
+                        <div class="file-item" id="file-py"><span class="icon">🐍</span> oracle_feed.py</div>
+                        <div class="file-item" id="file-yaml"><span class="icon">⚙</span> deploy_k8s.yaml</div>
+                        <div class="file-item" id="file-audit"><span class="icon">🛡️</span> security_audit.md</div>
+                    </div>
+                    <div class="code-editor-container">
+                        <div class="editor-tabs">
+                            <div class="tab active">AssetToken.sol</div>
+                            <div class="tab" id="tab-secops">SecOps Scan</div>
+                        </div>
+                        <div class="code-editor">
+                            <div class="line-numbers" id="line-numbers">1</div>
+                            <pre><code class="language-solidity" id="code-content">// GENERATING SMART CONTRACT...</code></pre>
+                        </div>
+                        <div class="ide-terminal">
+                            <div class="ide-term-header">
+                                <span>OUTPUT</span>
+                                <span class="sec-status">SEC_GUARDIAN: <span id="sec-status-text">IDLE</span></span>
+                            </div>
+                            <div id="ide-logs" class="ide-term-content">>> ADK Compiler v5.0 Ready...</div>
+                        </div>
+                    </div>
+                    <div class="ide-copilot">
+                        <div class="copilot-header">ADK COPILOT</div>
+                        <div class="copilot-messages" id="copilot-chat">
+                            <div class="msg ai">I am analyzing the CRM requirements to draft the Token Logic.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: Cloud Deploy -->
+            <section id="view-deploy" class="panel">
+                <div class="deploy-dashboard">
+                    <div class="server-map">
+                        <!-- Visual representation of servers -->
+                        <div class="node active" style="top: 20%; left: 30%;"><span>US-EAST (RPC)</span></div>
+                        <div class="node" style="top: 50%; left: 60%;"><span>EU-WEST (IPFS)</span></div>
+                        <div class="node" style="top: 70%; left: 20%;"><span>ASIA-PAC (VAL)</span></div>
+                        <div class="connection-line"></div>
+                    </div>
+                    <div class="deploy-logs">
+                        <h3>DEPLOYMENT PIPELINE</h3>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="deploy-progress" style="width: 0%"></div>
+                        </div>
+                        <ul id="deploy-steps">
+                            <li class="pending">Smart Contract Compilation</li>
+                            <li class="pending">SecOps Vulnerability Scan</li>
+                            <li class="pending">Build Container Image</li>
+                            <li class="pending">Provision Infrastructure</li>
+                            <li class="pending">Propagate DNS</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: Marketing HQ -->
+            <section id="view-marketing" class="panel">
+                <div class="marketing-dashboard">
+                    <div class="marketing-input">
+                        <h3>CAMPAIGN GENERATOR</h3>
+                        <div class="input-group">
+                            <input type="text" id="marketing-topic" placeholder="Enter topic (e.g. Real Estate Tokenization)" value="Asset Tokenization Trends">
+                            <button id="btn-gen-marketing" class="cyber-btn-small">GENERATE ASSETS</button>
+                        </div>
+                    </div>
+                    <div class="marketing-content-area">
+                        <div class="blog-preview">
+                            <h4>SEO CONTENT (Google Grounded)</h4>
+                            <div id="seo-content" class="content-box">
+                                <span class="placeholder-text">Waiting for input...</span>
+                            </div>
+                        </div>
+                        <div class="image-preview">
+                            <h4>SEMANTIC HEADER IMAGE</h4>
+                            <div id="image-result" class="image-box">
+                                <span class="placeholder-text">Image will appear here...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Lead Detail Modal -->
+    <dialog id="lead-modal" class="glass-modal">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-lead-name">Company Name</h2>
+                <button class="close-modal" id="close-modal-btn">×</button>
+            </header>
+            <div class="modal-body">
+                <div class="metric-row">
+                    <div class="metric">
+                        <span class="label">ESTIMATED VALUE</span>
+                        <span class="value success" id="modal-lead-value">$0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">CLOSE PROBABILITY</span>
+                        <span class="value info" id="modal-lead-prob">0%</span>
+                    </div>
+                </div>
+                <div class="ai-analysis-section">
+                    <h3>ADK AI ANALYSIS</h3>
+                    <div id="modal-ai-content" class="ai-text">
+                        <span class="blink">Analyzing lead data...</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="cyber-btn-small" id="btn-email-lead">AUTO-DRAFT EMAIL</button>
+                    <button class="cyber-btn-small" id="btn-deploy-demo">DEPLOY DEMO</button>
                 </div>
             </div>
         </div>
-        
-        <footer class="agent-status-bar">
-            <div class="agent-pill"><span class="dot"></span> CryptoIQ</div>
-            <div class="agent-pill"><span class="dot"></span> Guardian Security</div>
-            <div class="agent-pill"><span class="dot"></span> Breeze CRM</div>
-            <div class="agent-pill"><span class="dot"></span> Growth AI</div>
-        </footer>
-    </main>
+    </dialog>
+
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>
