@@ -51,6 +51,9 @@
                 <button class="nav-btn" data-view="marketing">
                     <span class="icon">⚡</span> MARKETING HQ
                 </button>
+                <button class="nav-btn" data-view="nano">
+                    <span class="icon">🍌</span> NANO BANANA
+                </button>
             </div>
 
             <!-- Market Watch Widget -->
@@ -207,6 +210,65 @@
                             <h4>SEMANTIC HEADER IMAGE</h4>
                             <div id="image-result" class="image-box">
                                 <span class="placeholder-text">Image will appear here...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: Nano Banana Studio -->
+            <section id="view-nano" class="panel">
+                <div class="nano-studio-layout">
+                    <div class="nano-controls">
+                        <h3>NANO BANANA STUDIO</h3>
+                        <p class="nano-desc">Experimental Multi-Modality Vision Lab</p>
+                        
+                        <div class="nano-input-group">
+                            <label>VISION PROMPT</label>
+                            <textarea id="nano-prompt" placeholder="A Cyberpunk cityscape with floating golden bananas..."></textarea>
+                        </div>
+
+                        <div class="nano-settings">
+                            <div class="setting-item">
+                                <label>MODEL ENGINE</label>
+                                <select id="nano-model-select">
+                                    <option value="gemini-2.5-flash-image">Banana Flash (Fast)</option>
+                                    <option value="gemini-3-pro-image-preview">Banana Pro (High Fidelity)</option>
+                                </select>
+                            </div>
+                            <div class="setting-item" id="nano-size-container" style="display:none;">
+                                <label>OUTPUT QUALITY</label>
+                                <select id="nano-size-select">
+                                    <option value="1K">1K Resolution</option>
+                                    <option value="2K">2K Resolution</option>
+                                    <option value="4K">4K Resolution</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label>ASPECT RATIO</label>
+                                <select id="nano-aspect-select">
+                                    <option value="1:1">1:1 Square</option>
+                                    <option value="16:9">16:9 Landscape</option>
+                                    <option value="9:16">9:16 Portrait</option>
+                                    <option value="4:3">4:3 Classic</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="nano-actions">
+                            <button id="nano-generate-btn" class="cyber-btn-small">BAKE VISION</button>
+                            <button id="nano-edit-btn" class="cyber-btn-small secondary" disabled>ITERATE (AI EDIT)</button>
+                        </div>
+                    </div>
+
+                    <div class="nano-display">
+                        <div class="nano-canvas-header">
+                            <span id="nano-status-msg">WAITING FOR SEED...</span>
+                        </div>
+                        <div class="nano-canvas" id="nano-canvas">
+                            <div class="nano-placeholder">
+                                <div class="banana-icon-large">🍌</div>
+                                <p>INITIALIZE VISION SEQUENCE</p>
                             </div>
                         </div>
                     </div>

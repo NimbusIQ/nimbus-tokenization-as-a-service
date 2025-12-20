@@ -1,4 +1,3 @@
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -9,7 +8,6 @@ import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
 
 const API_KEY = process.env.API_KEY;
-const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 // UI Elements
 const navBtns = document.querySelectorAll('.nav-btn');
@@ -44,10 +42,23 @@ const btnGenMarketing = document.getElementById('btn-gen-marketing');
 const seoContent = document.getElementById('seo-content');
 const imageResult = document.getElementById('image-result');
 
+// Nano Banana Studio Elements
+const nanoPrompt = document.getElementById('nano-prompt') as HTMLTextAreaElement;
+const nanoModelSelect = document.getElementById('nano-model-select') as HTMLSelectElement;
+const nanoSizeSelect = document.getElementById('nano-size-select') as HTMLSelectElement;
+const nanoSizeContainer = document.getElementById('nano-size-container');
+const nanoAspectSelect = document.getElementById('nano-aspect-select') as HTMLSelectElement;
+const nanoGenBtn = document.getElementById('nano-generate-btn') as HTMLButtonElement;
+const nanoEditBtn = document.getElementById('nano-edit-btn') as HTMLButtonElement;
+const nanoCanvas = document.getElementById('nano-canvas');
+const nanoStatusMsg = document.getElementById('nano-status-msg');
+
 // State
 let currentView = 'terminal';
 let isRunning = false;
 let isInfiniteLoop = false;
+let lastGeneratedImageData: { data: string, mimeType: string } | null = null;
+
 let loopContext = {
     feature: "Token Asset Standard (TAS-1)",
     userCount: 0,
@@ -136,6 +147,8 @@ generateBtn.addEventListener('click', async () => {
             await runDeploySimulation();
         } else if (currentView === 'marketing') {
             await runMarketingAgent();
+        } else if (currentView === 'nano') {
+            await runNanoStudioAction(false);
         }
     } catch (e) {
         console.error(e);
@@ -158,23 +171,23 @@ function handleAutonomousTransition() {
 
     switch(currentView) {
         case 'ide': 
-            // IDE -> Deploy (via simulated Security check internal to IDE)
             nextView = 'deploy'; 
             setStatus("Security Scan Passed. Initializing Deployment...", "success");
             break;
         case 'deploy': 
-            // Deploy -> Marketing (Announce the new feature)
             nextView = 'marketing'; 
             setStatus("Deployed. Triggering Marketing Agent...", "success");
             break;
         case 'marketing':
-            // Marketing -> CRM (Leads come in)
+            nextView = 'nano';
+            setStatus("Assets Created. Launching Vision Lab...", "success");
+            break;
+        case 'nano':
             nextView = 'crm';
             setStatus("Campaign Live. Inbound Leads Detected...", "success");
             loopContext.userCount += Math.floor(Math.random() * 150) + 50;
             break;
         case 'crm': 
-            // CRM -> IDE (Scale based on demand)
             nextView = 'ide'; 
             setStatus("Scaling Architecture for User Growth...", "success");
             loopContext.feature = "Layer 2 Scaling (Optimism)";
@@ -205,6 +218,7 @@ async function runTerminalSimulation() {
     Context: We are currently in the "${loopContext.feature}" phase with ${loopContext.userCount} active users.
     Output markdown. Narrative style, high-tech, concise.`;
 
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     const stream = await ai.models.generateContentStream({
         model: 'gemini-2.5-flash',
         contents: prompt,
@@ -229,6 +243,7 @@ async function runTerminalSimulation() {
 async function runCRMSimulation() {
     setStatus("Syncing Inbound Leads...", "busy");
     
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     const prompt = `Generate 4 realistic high-value CRM leads for a Real Estate Tokenization Platform.
     Return ONLY raw JSON array.
     Structure: [{ "company": string, "value": string, "status": "lead" | "active" | "closed", "tags": string[], "industry": string }]`;
@@ -241,14 +256,12 @@ async function runCRMSimulation() {
 
     const leads = JSON.parse(response.text || "[]");
     
-    // Clear existing columns but keep header
     const cols = ['list-leads', 'list-active', 'list-closed'];
     cols.forEach(id => {
         const el = document.getElementById(id);
         if(el) el.innerHTML = '';
     });
 
-    // Render new leads
     leads.forEach((lead: any) => {
         const card = document.createElement('div');
         card.className = 'crm-card slide-in';
@@ -260,7 +273,6 @@ async function runCRMSimulation() {
             </div>
         `;
         
-        // Attach Click Handler for Modal
         card.addEventListener('click', () => openLeadModal(lead));
 
         if (lead.status === 'lead' && listLeads) listLeads.prepend(card);
@@ -268,11 +280,9 @@ async function runCRMSimulation() {
         else if (lead.status === 'closed' && listClosed) listClosed.prepend(card);
     });
 
-    // Update counts based on simulated "growth"
-    const baseCount = loopContext.userCount;
-    document.querySelector('#col-leads .count')!.textContent = (Math.floor(baseCount * 0.1)).toString();
-    document.querySelector('#col-active .count')!.textContent = (Math.floor(baseCount * 0.05)).toString();
-    document.querySelector('#col-closed .count')!.textContent = (Math.floor(baseCount * 0.02)).toString();
+    document.querySelector('#col-leads .count')!.textContent = (Math.floor(loopContext.userCount * 0.1)).toString();
+    document.querySelector('#col-active .count')!.textContent = (Math.floor(loopContext.userCount * 0.05)).toString();
+    document.querySelector('#col-closed .count')!.textContent = (Math.floor(loopContext.userCount * 0.02)).toString();
 
     setStatus("Pipeline Synced", "idle");
 }
@@ -291,10 +301,10 @@ async function openLeadModal(lead: any) {
     if (aiContent) {
         aiContent.innerHTML = '<span class="blink">Generating Deal Strategy...</span>';
         
-        // Generate insights
         const analysisPrompt = `Analyze this CRM lead: ${lead.company} in ${lead.industry} worth ${lead.value}.
         Provide 2 bullet points on why they need asset tokenization and 1 recommended next step.`;
         
+        const ai = new GoogleGenAI({ apiKey: API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: analysisPrompt
@@ -308,7 +318,6 @@ async function openLeadModal(lead: any) {
 
 if (closeModalBtn && leadModal) {
     closeModalBtn.addEventListener('click', () => leadModal.close());
-    // Close on click outside
     leadModal.addEventListener('click', (e) => {
         const rect = leadModal.getBoundingClientRect();
         if (e.clientX < rect.left || e.clientX > rect.right || 
@@ -329,7 +338,7 @@ async function runIDELoop() {
         secStatusText.style.color = "#888";
     }
     
-    // Step 1: Generate Code
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     const codePrompt = `Generate a Solidity Smart Contract (AssetToken.sol) for ${loopContext.feature}.
     Context: Handling ${loopContext.userCount} fractional owners.
     Include OpenZeppelin imports and comments.`;
@@ -353,7 +362,6 @@ async function runIDELoop() {
         ideLogs.scrollTop = ideLogs.scrollHeight;
     }
 
-    // Step 2: Update Copilot
     if (copilotChat) {
         copilotChat.innerHTML += `
             <div class="msg ai">I've implemented the base logic for ${loopContext.feature}. Initiating Security Audit...</div>
@@ -361,7 +369,6 @@ async function runIDELoop() {
         copilotChat.scrollTop = copilotChat.scrollHeight;
     }
 
-    // Step 3: Run Security Scan (Simulated via Gemini)
     await new Promise(r => setTimeout(r, 800));
     setStatus("Running SecOps Vulnerability Scan...", "busy");
     if(secStatusText) {
@@ -390,7 +397,6 @@ async function runIDELoop() {
         secStatusText.style.color = auditResult.includes("WARNING") ? "#ffbd2e" : "#00ff9d";
     }
     
-    // Step 4: Finalize
     await new Promise(r => setTimeout(r, 800));
     setStatus("Build Complete", "idle");
 }
@@ -405,25 +411,17 @@ async function runDeploySimulation() {
     const bar = document.getElementById('deploy-progress');
     const nodes = document.querySelectorAll('.node');
     
-    // Reset
     if (bar) bar.style.width = '0%';
     steps.forEach(s => s.className = 'pending');
     nodes.forEach(n => n.classList.remove('active'));
 
     for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        step.className = 'active'; // Highlight current
-        
-        // Random "work" time
+        step.className = 'active';
         await new Promise(r => setTimeout(r, 800)); 
-        
         if (bar) bar.style.width = `${((i + 1) / steps.length) * 100}%`;
         step.className = 'done';
-
-        // Light up a server node per step
-        if (i < nodes.length) {
-            nodes[i].classList.add('active');
-        }
+        if (i < nodes.length) nodes[i].classList.add('active');
     }
     
     setStatus(`Deployed to ${loopContext.infrastructure}`, "success");
@@ -443,7 +441,7 @@ async function runMarketingAgent() {
     if (seoContent) seoContent.innerHTML = '<span class="blink">Researching Search Trends...</span>';
     if (imageResult) imageResult.innerHTML = '<span class="blink">Dreaming up visuals...</span>';
 
-    // 1. Generate SEO Content with Search Grounding
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
     const seoPrompt = `Research trending keywords related to "${topic}".
     Write a short, punchy 100-word blog post snippet promoting the ADK Platform's new feature: ${loopContext.feature}.
     Use the search results to add relevant hashtags.`;
@@ -451,26 +449,20 @@ async function runMarketingAgent() {
     const seoResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: seoPrompt,
-        config: { tools: [{googleSearch: {}}] } // Search Grounding
+        config: { tools: [{googleSearch: {}}] }
     });
 
-    if (seoContent) {
-        seoContent.innerHTML = await marked.parse(seoResponse.text || "Content generation failed.");
-    }
+    if (seoContent) seoContent.innerHTML = await marked.parse(seoResponse.text || "Content generation failed.");
 
-    // 2. Generate Semantic Image
     const imagePrompt = `A futuristic, high-tech header image for a blog post about ${topic} and ${loopContext.feature}. 
     Cyberpunk aesthetic, neon blue and purple, digital assets, blockchain nodes. High quality, 4k.`;
 
     try {
         const imageResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
-            contents: {
-                parts: [{ text: imagePrompt }]
-            }
+            contents: { parts: [{ text: imagePrompt }] }
         });
         
-        // Since flash-image returns base64 inlineData, we iterate to find it
         let imgHtml = '';
         if (imageResponse.candidates && imageResponse.candidates[0].content.parts) {
             for (const part of imageResponse.candidates[0].content.parts) {
@@ -480,17 +472,118 @@ async function runMarketingAgent() {
                 }
             }
         }
-        
-        if (imageResult) {
-            imageResult.innerHTML = imgHtml || "<p>Image generation simulation (No image data returned)</p>";
-        }
+        if (imageResult) imageResult.innerHTML = imgHtml || "<p>Generation simulation complete</p>";
     } catch (e) {
         console.error("Image Gen Error", e);
-        if (imageResult) imageResult.innerHTML = "<p style='color:red'>Image Gen Failed. (Check Model Access)</p>";
+        if (imageResult) imageResult.innerHTML = "<p style='color:red'>Generation Failed</p>";
     }
 
     setStatus("Campaign Assets Ready", "idle");
 }
+
+/**
+ * NANO BANANA STUDIO
+ */
+if (nanoModelSelect) {
+    nanoModelSelect.addEventListener('change', () => {
+        if (nanoSizeContainer) {
+            nanoSizeContainer.style.display = nanoModelSelect.value === 'gemini-3-pro-image-preview' ? 'flex' : 'none';
+        }
+    });
+}
+
+if (nanoGenBtn) nanoGenBtn.addEventListener('click', () => runNanoStudioAction(false));
+if (nanoEditBtn) nanoEditBtn.addEventListener('click', () => runNanoStudioAction(true));
+
+async function runNanoStudioAction(isEdit: boolean) {
+    const prompt = nanoPrompt.value || "A vibrant cyberpunk banana floating in deep space";
+    const model = nanoModelSelect.value;
+    const size = nanoSizeSelect.value;
+    const aspect = nanoAspectSelect.value;
+
+    setStatus("Nano Studio Baking...", "busy");
+    if (nanoStatusMsg) nanoStatusMsg.textContent = isEdit ? "RE-IMAGINING VISION..." : "BAKING INITIAL VISION...";
+    
+    if (nanoCanvas && !isEdit) {
+        nanoCanvas.innerHTML = '<div class="nano-placeholder"><div class="banana-icon-large blink">🍌</div><p>PROCESSING PHOTONS...</p></div>';
+    }
+
+    // Check for API Key if Pro model
+    if (model === 'gemini-3-pro-image-preview') {
+        const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+        if (!hasKey) {
+            await (window as any).aistudio.openSelectKey();
+            // Proceed assuming success as per guidelines
+        }
+    }
+
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
+    
+    let parts: any[] = [{ text: prompt }];
+    if (isEdit && lastGeneratedImageData) {
+        parts.unshift({
+            inlineData: {
+                data: lastGeneratedImageData.data,
+                mimeType: lastGeneratedImageData.mimeType
+            }
+        });
+    }
+
+    const config: any = {
+        imageConfig: {
+            aspectRatio: aspect
+        }
+    };
+
+    if (model === 'gemini-3-pro-image-preview') {
+        config.imageConfig.imageSize = size;
+    }
+
+    try {
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: { parts: parts },
+            config: config
+        });
+
+        let imgData: string | null = null;
+        let mimeType: string = 'image/png';
+
+        if (response.candidates?.[0]?.content?.parts) {
+            for (const part of response.candidates[0].content.parts) {
+                if (part.inlineData) {
+                    imgData = part.inlineData.data;
+                    mimeType = part.inlineData.mimeType;
+                    break;
+                }
+            }
+        }
+
+        if (imgData) {
+            lastGeneratedImageData = { data: imgData, mimeType: mimeType };
+            if (nanoCanvas) {
+                nanoCanvas.innerHTML = `<img src="data:${mimeType};base64,${imgData}" alt="Nano Banana Generation" />`;
+            }
+            if (nanoStatusMsg) nanoStatusMsg.textContent = "VISION STABILIZED.";
+            if (nanoEditBtn) nanoEditBtn.disabled = false;
+        } else {
+            throw new Error("No image data returned from model.");
+        }
+
+    } catch (e: any) {
+        console.error("Nano Studio Error:", e);
+        if (nanoStatusMsg) nanoStatusMsg.textContent = "STABILIZATION FAILED.";
+        if (nanoCanvas) nanoCanvas.innerHTML += `<p style="color:red; font-size:0.8rem;">Error: ${e.message}</p>`;
+        
+        // Handle billing/API key error as per instructions
+        if (e.message?.includes("Requested entity was not found")) {
+            await (window as any).aistudio.openSelectKey();
+        }
+    }
+
+    setStatus("Studio Idle", "idle");
+}
+
 
 /**
  * MARKET WATCH: Simulated Ticker
@@ -499,12 +592,11 @@ function updateMarketWatch() {
     const ticker = document.getElementById('market-ticker');
     if (!ticker) return;
 
-    // Simulate price movements
     const cryptos = [
         { sym: "BTC", price: 90000 + Math.random() * 500, change: (Math.random() - 0.4) * 2 },
         { sym: "ETH", price: 3000 + Math.random() * 50, change: (Math.random() - 0.4) * 3 },
         { sym: "SOL", price: 140 + Math.random() * 5, change: (Math.random() - 0.4) * 5 },
-        { sym: "ADK", price: 1.25 + Math.random() * 0.1, change: (Math.random()) * 10 } // Our token
+        { sym: "ADK", price: 1.25 + Math.random() * 0.1, change: (Math.random()) * 10 }
     ];
 
     ticker.innerHTML = cryptos.map(c => `
@@ -517,11 +609,9 @@ function updateMarketWatch() {
     `).join('');
 }
 
-// Update ticker every 5 seconds
 setInterval(updateMarketWatch, 5000);
 updateMarketWatch();
 
-// Auto-activate infinite loop if user toggles it immediately
 infiniteLoopToggle.addEventListener('change', () => {
     if (infiniteLoopToggle.checked && !isRunning) {
         generateBtn.click();
